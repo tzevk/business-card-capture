@@ -153,12 +153,22 @@ export default function CapturePage() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [brightness, setBrightness] = useState<number>(255);
   const [blurWarning, setBlurWarning] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [captureCount, setCaptureCount] = useState(0);
+  const [showFlash, setShowFlash] = useState(false);
 
   const tooDark = brightness < BRIGHTNESS_THRESHOLD;
 
+  // Derive a friendly status label
+  const statusLabel = tooDark
+    ? "low-light"
+    : brightness < 80
+      ? "dim"
+      : "ready";
+
   // Poll brightness from the live video feed
   useEffect(() => {
-    if (capturedImage) return;            // stop polling when previewing
+    if (capturedImage) return;
 
     const id = setInterval(() => {
       const video = webcamRef.current?.video;
@@ -171,25 +181,35 @@ export default function CapturePage() {
   }, [capturedImage]);
 
   const handleCapture = useCallback(async () => {
-    if (tooDark) return;                  // block capture when too dark
+    if (tooDark || processing) return;
     setBlurWarning(null);
+    setProcessing(true);
 
     const imageSrc = webcamRef.current?.getScreenshot();
-    if (!imageSrc) return;
+    if (!imageSrc) {
+      setProcessing(false);
+      return;
+    }
 
     const variance = await getLaplacianVariance(imageSrc);
 
     if (variance < BLUR_THRESHOLD) {
-      setBlurWarning(
-        `Image is too blurry (sharpness ${variance.toFixed(1)}). Hold steady and try again.`
-      );
+      setBlurWarning("Too blurry — hold your phone steady and try again");
+      setProcessing(false);
       return;
     }
 
     // Resize to fixed 1024×585 before storing
     const resized = await resizeImage(imageSrc);
+
+    // Camera-flash effect
+    setShowFlash(true);
+    setTimeout(() => setShowFlash(false), 200);
+
     setCapturedImage(resized);
-  }, [tooDark]);
+    setCaptureCount((c) => c + 1);
+    setProcessing(false);
+  }, [tooDark, processing]);
 
   const handleRetake = useCallback(() => {
     setCapturedImage(null);
@@ -198,33 +218,54 @@ export default function CapturePage() {
 
   return (
     <div className="capture-page">
+      {/* ── Header ── */}
       <header className="capture-header">
-        <h1 className="capture-title">Business Card Capture</h1>
+        <h1 className="capture-title">
+          <span className="capture-title-icon">&#9878;</span>{" "}
+          CaptureCAM
+        </h1>
+        {captureCount > 0 && (
+          <span className="capture-counter">{captureCount} captured</span>
+        )}
       </header>
 
       <main className="capture-main">
         {capturedImage ? (
+          /* ── Preview state ── */
           <div className="preview-container">
+            <div className="preview-badge">&#10003; Captured</div>
             <img
               src={capturedImage}
               alt="Captured business card"
               className="preview-image"
             />
+            <p className="preview-size">1024 &times; 585 px &middot; PNG</p>
             <div className="capture-actions">
               <button className="btn btn-secondary" onClick={handleRetake}>
-                Retake
+                &#8634; Retake
               </button>
               <a
                 className="btn btn-primary"
                 href={capturedImage}
                 download="business-card.png"
               >
-                Download
+                &#8615; Save
               </a>
             </div>
           </div>
         ) : (
+          /* ── Camera state ── */
           <div className="camera-container">
+            {/* Status pill */}
+            <div className={`status-pill status-pill--${statusLabel}`}>
+              <span className="status-dot" />
+              {statusLabel === "ready"
+                ? "Ready to capture"
+                : statusLabel === "dim"
+                  ? "Dim lighting — still OK"
+                  : "Too dark — add light"}
+            </div>
+
             <div className="camera-viewport">
               <Webcam
                 ref={webcamRef}
@@ -242,26 +283,26 @@ export default function CapturePage() {
                     <span className="overlay-corner overlay-corner-tr" />
                     <span className="overlay-corner overlay-corner-bl" />
                     <span className="overlay-corner overlay-corner-br" />
+                    <span className="overlay-label">Place card here</span>
                   </div>
                   <div className="overlay-mask overlay-mask-side" />
                 </div>
                 <div className="overlay-mask overlay-mask-bottom" />
               </div>
-            </div>
-            {tooDark && (
-              <div className="brightness-warning">
-                <span className="brightness-warning-icon">&#9888;</span>
-                Too dark to capture — add more light
-              </div>
-            )}
 
+              {/* Flash effect */}
+              {showFlash && <div className="capture-flash" />}
+            </div>
+
+            {/* Warnings */}
             {blurWarning && !tooDark && (
               <div className="blur-warning">
-                <span className="blur-warning-icon">&#9676;</span>
+                <span className="blur-warning-icon">&#9711;</span>
                 {blurWarning}
               </div>
             )}
 
+            {/* Brightness bar */}
             <div className="brightness-bar">
               <div
                 className={`brightness-bar-fill${
@@ -271,18 +312,24 @@ export default function CapturePage() {
               />
             </div>
 
-            <p className="capture-hint">
-              Align the business card within the frame
-            </p>
+            {/* Capture button */}
             <div className="capture-actions">
               <button
-                className={`btn btn-primary${tooDark ? " btn-disabled" : ""}`}
+                className={`btn btn-capture${tooDark || processing ? " btn-disabled" : ""}`}
                 onClick={handleCapture}
-                disabled={tooDark}
+                disabled={tooDark || processing}
               >
-                Capture
+                {processing ? (
+                  <span className="spinner" />
+                ) : (
+                  <span className="btn-capture-ring" />
+                )}
               </button>
             </div>
+
+            <p className="capture-hint">
+              Align the card within the blue frame, then tap the button
+            </p>
           </div>
         )}
       </main>

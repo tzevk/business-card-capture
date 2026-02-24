@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Business Card Capture",
+  title: "CaptureCAM",
   description: "Capture business cards with your camera",
 };
 
