@@ -1,0 +1,305 @@
+/* ══════════════════════════════════════════
+   Capture Page — Mobile-only, plain CSS
+   ══════════════════════════════════════════ */
+
+/* ── Page layout ── */
+.capture-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;
+  padding: 1rem 0.75rem 1.5rem;
+  background: #0a0a0a;
+  color: #ededed;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.capture-header {
+  width: 100%;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.capture-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.capture-main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Camera ── */
+.camera-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.camera-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #111;
+  border: 1.5px solid #1a1a1a;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
+}
+
+.camera-feed {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Overlay (dark mask with transparent center) ── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.overlay-mask {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.overlay-mask-top,
+.overlay-mask-bottom {
+  flex: 1;
+}
+
+.overlay-middle {
+  display: flex;
+}
+
+.overlay-mask-side {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.overlay-cutout {
+  position: relative;
+  width: 88%;
+  aspect-ratio: 1.75 / 1;
+  flex-shrink: 0;
+  border: 2px solid rgba(59, 130, 246, 0.6);
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.15),
+    inset 0 0 20px rgba(59, 130, 246, 0.05);
+}
+
+/* ── Corner accents (blue) ── */
+.overlay-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: #3b82f6;
+  border-style: solid;
+}
+
+.overlay-corner-tl {
+  top: -2px;
+  left: -2px;
+  border-width: 3px 0 0 3px;
+  border-radius: 8px 0 0 0;
+}
+
+.overlay-corner-tr {
+  top: -2px;
+  right: -2px;
+  border-width: 3px 3px 0 0;
+  border-radius: 0 8px 0 0;
+}
+
+.overlay-corner-bl {
+  bottom: -2px;
+  left: -2px;
+  border-width: 0 0 3px 3px;
+  border-radius: 0 0 0 8px;
+}
+
+.overlay-corner-br {
+  bottom: -2px;
+  right: -2px;
+  border-width: 0 3px 3px 0;
+  border-radius: 0 0 8px 0;
+}
+
+/* ── Brightness warning ── */
+.brightness-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 8px;
+  text-align: center;
+  animation: warningPulse 2s ease-in-out infinite;
+}
+
+.brightness-warning-icon {
+  font-size: 0.875rem;
+}
+
+@keyframes warningPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.7; }
+}
+
+/* ── Brightness indicator bar ── */
+.brightness-bar {
+  width: 100%;
+  height: 3px;
+  background: #1a1a1a;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.brightness-bar-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 2px;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+.brightness-bar-fill--low {
+  background: #f59e0b;
+}
+
+/* ── Blur warning ── */
+.blur-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  border-radius: 8px;
+  text-align: center;
+  animation: warningPulse 2s ease-in-out infinite;
+}
+
+.blur-warning-icon {
+  font-size: 1rem;
+}
+
+/* ── Disabled button ── */
+.btn-disabled,
+.btn-disabled:hover {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ── Hint text ── */
+.capture-hint {
+  font-size: 0.75rem;
+  color: #777;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+/* ── Actions bar ── */
+.capture-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  width: 100%;
+  padding-top: 0.125rem;
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    transform 0.1s ease,
+    box-shadow 0.2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.35);
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.45);
+}
+
+.btn-secondary {
+  background: #1e1e1e;
+  color: #ededed;
+  border: 1px solid #333;
+}
+
+.btn-secondary:hover {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+/* ── Preview ── */
+.preview-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.preview-image {
+  width: 100%;
+  border-radius: 14px;
+  object-fit: contain;
+  border: 1.5px solid #1a1a1a;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Preview ── */
+.preview-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
