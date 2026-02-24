@@ -148,6 +148,30 @@ function resizeImage(imageSrc: string): Promise<string> {
   });
 }
 
+/**
+ * Convert a data-URL to a File object for FormData upload.
+ */
+function dataURLtoFile(dataUrl: string, filename: string): File {
+  const [header, base64] = dataUrl.split(",");
+  const mime = header.match(/:(.*?);/)?.[1] ?? "image/png";
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], filename, { type: mime });
+}
+
+/**
+ * Upload captured image to /api/upload.
+ */
+async function uploadImage(dataUrl: string): Promise<{ success: boolean; url?: string; error?: string }> {
+  const file = dataURLtoFile(dataUrl, "capture.png");
+  const form = new FormData();
+  form.append("image", file);
+
+  const res = await fetch("/api/upload", { method: "POST", body: form });
+  return res.json();
+}
+
 export default function CapturePage() {
   const webcamRef = useRef<Webcam>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -156,6 +180,7 @@ export default function CapturePage() {
   const [processing, setProcessing] = useState(false);
   const [captureCount, setCaptureCount] = useState(0);
   const [showFlash, setShowFlash] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
 
   const tooDark = brightness < BRIGHTNESS_THRESHOLD;
 
@@ -208,12 +233,23 @@ export default function CapturePage() {
 
     setCapturedImage(resized);
     setCaptureCount((c) => c + 1);
+
+    // Auto-upload to backend
+    setUploadStatus("uploading");
+    try {
+      const result = await uploadImage(resized);
+      setUploadStatus(result.success ? "done" : "error");
+    } catch {
+      setUploadStatus("error");
+    }
+
     setProcessing(false);
   }, [tooDark, processing]);
 
   const handleRetake = useCallback(() => {
     setCapturedImage(null);
     setBlurWarning(null);
+    setUploadStatus("idle");
   }, []);
 
   return (
@@ -233,7 +269,15 @@ export default function CapturePage() {
         {capturedImage ? (
           /* ── Preview state ── */
           <div className="preview-container">
-            <div className="preview-badge">&#10003; Captured</div>
+            <div className="preview-badge">
+              {uploadStatus === "uploading"
+                ? "\u2B6E Uploading\u2026"
+                : uploadStatus === "done"
+                  ? "\u2713 Saved"
+                  : uploadStatus === "error"
+                    ? "\u2717 Upload failed"
+                    : "\u2713 Captured"}
+            </div>
             <img
               src={capturedImage}
               alt="Captured business card"
@@ -244,12 +288,8 @@ export default function CapturePage() {
               <button className="btn btn-secondary" onClick={handleRetake}>
                 &#8634; Retake
               </button>
-              <a
-                className="btn btn-primary"
-                href={capturedImage}
-                download="business-card.png"
-              >
-                &#8615; Save
+              <a className="btn btn-primary" href="/gallery">
+                &#9871; Gallery
               </a>
             </div>
           </div>
